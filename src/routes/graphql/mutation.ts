@@ -1,16 +1,16 @@
 import { GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from "graphql";
 import { UUIDType } from "./types/uuid.js";
 import { Context, Args, RootObject, User, CreateUserArgs, CreatePostArgs, CreateProfileArgs } from "./types/types.js";
-import { CreateUserBodyType, UserType } from "./types/user.js";
-import { CreatePostBodyType, PostType } from "./types/post.js";
-import { CreateProfileBodyType, ProfileType } from "./types/profile.js";
+import { ChangeUserBodyType, CreateUserBodyType, UserType } from "./types/user.js";
+import { ChangePostBodyType, CreatePostBodyType, PostType } from "./types/post.js";
+import { ChangeProfileBodyType, CreateProfileBodyType, ProfileType } from "./types/profile.js";
 import { MemberType, MemberTypeId } from "./types/memberType.js";
 
 export const rootMutationType = new GraphQLObjectType<RootObject, Context>({
   name: 'Mutation',
   fields: {
     createUser: {
-      type: UserType,
+      type: new GraphQLNonNull(UserType),
       args: {
         dto: { type: new GraphQLNonNull(CreateUserBodyType) },
       },
@@ -22,7 +22,7 @@ export const rootMutationType = new GraphQLObjectType<RootObject, Context>({
     },
 
     createPost: {
-      type: PostType,
+      type: new GraphQLNonNull(PostType),
       args: {
         dto: { type: new GraphQLNonNull(CreatePostBodyType) },
       },
@@ -34,7 +34,7 @@ export const rootMutationType = new GraphQLObjectType<RootObject, Context>({
     },
 
     createProfile: {
-      type: ProfileType,
+      type: new GraphQLNonNull(ProfileType),
       args: {
         dto: { type: new GraphQLNonNull(CreateProfileBodyType) },
       },
@@ -51,7 +51,7 @@ export const rootMutationType = new GraphQLObjectType<RootObject, Context>({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_obg, { id }: Args, context) => {
-        const user = await context.prisma.user.delete({
+        await context.prisma.user.delete({
           where: {
             id: id,
           },
@@ -66,7 +66,7 @@ export const rootMutationType = new GraphQLObjectType<RootObject, Context>({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_obg, { id }: Args, context) => {
-        const post = await context.prisma.post.delete({
+        await context.prisma.post.delete({
           where: {
             id: id,
           },
@@ -81,12 +81,54 @@ export const rootMutationType = new GraphQLObjectType<RootObject, Context>({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_obg, { id }: Args, context) => {
-        const profile = await context.prisma.profile.delete({
+        await context.prisma.profile.delete({
           where: {
             id: id,
           },
         });
         return 'Profile was deleted';
+      },
+    },
+
+    changeUser: {
+      type: new GraphQLNonNull(UserType),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangeUserBodyType) },
+      },
+      resolve: async (_obj, { dto, id }: CreateUserArgs & Args, context) => {
+        return context.prisma.user.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    changePost: {
+      type: new GraphQLNonNull(PostType),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangePostBodyType) },
+      },
+      resolve: async (_obj, { dto, id }: CreatePostArgs & Args, context) => {
+        return context.prisma.post.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    changeProfile: {
+      type: new GraphQLNonNull(ProfileType),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(ChangeProfileBodyType) },
+      },
+      resolve: async (_obj, { dto, id }: CreateProfileArgs & Args, context) => {
+        return context.prisma.profile.update({
+          where: { id },
+          data: dto,
+        });
       },
     },
 
