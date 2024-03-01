@@ -20,6 +20,11 @@ export type CreateProfileArgs = {
   dto: Omit<Profile, 'id'>,
 };
 
+export type SubscribeArgs = {
+  userId: string,
+  authorId: string,
+}
+
 export type User = {
   id: string,
   name: string,
