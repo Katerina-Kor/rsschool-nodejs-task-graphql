@@ -26,6 +26,5 @@ export const ChangePostBodyType = new GraphQLInputObjectType({
   fields: {
     title: { type: GraphQLString },
     content: { type: GraphQLString},
-    authorId: { type: UUIDType },
   },
 });

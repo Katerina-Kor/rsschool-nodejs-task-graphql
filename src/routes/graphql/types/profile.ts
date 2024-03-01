@@ -40,7 +40,6 @@ export const ChangeProfileBodyType = new GraphQLInputObjectType({
   fields: {
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
-    userId: { type: UUIDType },
     memberTypeId: { type: MemberTypeId },
   },
 });
