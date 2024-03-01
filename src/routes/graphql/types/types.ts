@@ -8,6 +8,18 @@ export type Args = {
   id: string,
 };
 
+export type CreateUserArgs = {
+  dto: Omit<User, 'id'>,
+};
+
+export type CreatePostArgs = {
+  dto: Omit<Post, 'id'>,
+};
+
+export type CreateProfileArgs = {
+  dto: Omit<Profile, 'id'>,
+};
+
 export type User = {
   id: string,
   name: string,
