@@ -168,10 +168,6 @@ await test('gql-queries', async (t) => {
         userId: user1.id,
       },
     });
-    console.log('data', dataUser);
-    console.log('user1', user1);
-    console.log('profile1', profile1);
-    console.log('post1', post1);
     const {
       body: { data: dataUsers },
     } = await gqlQuery(app, {
