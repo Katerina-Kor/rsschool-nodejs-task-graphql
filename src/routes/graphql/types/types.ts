@@ -4,10 +4,10 @@ import { FieldNode } from "graphql";
 
 export type Context = {
   prisma: PrismaClient,
-  dataLoaders: {
-    [key: string]: any
-  }
+  dataLoaders: Map<DLKeys, any>
 };
+
+export type DLKeys = 'profile' | 'posts' | 'memberType' | 'userSubscribedTo' | 'subscribedToUser';
 
 export type Args = {
   id: string,

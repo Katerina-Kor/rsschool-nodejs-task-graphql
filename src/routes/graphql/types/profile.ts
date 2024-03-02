@@ -15,37 +15,28 @@ export const ProfileType = new GraphQLObjectType<Profile, Context>({
 
     memberType: {
       type: MemberType,
-      resolve: ({ memberTypeId }, _args, context, info) => {
-        // return context.prisma.memberType.findUnique({
-        //   where: {
-        //     id: memberTypeId,
-        //   },
-        // });
+      resolve: async ({ memberTypeId }, _args, { dataLoaders, prisma }) => {
 
-        const { dataLoaders } = context;
-
-        // единожды инициализируем DataLoader для получения авторов по ids
-        let dl = dataLoaders.memberType;
+        let dl = dataLoaders.get('memberType');
         if (!dl) {
-          dl = new DataLoader(async (ids: any) => {
-            // обращаемся в базу чтоб получить авторов по ids
-            const rows = await context.prisma.memberType.findMany({
+          dl = new DataLoader(async (ids) => {
+
+            const memberTypes = await prisma.memberType.findMany({
               where: {
                 id: {
-                  in: ids
+                  in: ids as string[]
                 }
               }
             });
-            // IMPORTANT: сортируем данные из базы в том порядке, как нам передали ids
-            const sortedInIdsOrder = ids.map(id => rows.find(x => x.id === id));
-            return sortedInIdsOrder;
+
+            const sortedMemberTypes = ids.map(id => memberTypes.find(memberType => memberType.id === id));
+            return sortedMemberTypes;
           });
-          // ложим инстанс дата-лоадера в WeakMap для повторного использования
-          dataLoaders.memberType = dl;
+
+          dataLoaders.set('memberType', dl);
         }
 
-        // юзаем метод `load` из нашего дата-лоадера
-        return dl.load(memberTypeId);
+        return await dl.load(memberTypeId);
       },
     },
   }),
