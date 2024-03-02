@@ -57,9 +57,12 @@ await test('gql-loader', async (t) => {
     const {
       body: { operationHistory: afterHistory },
     } = await getPrismaStats(app);
+    
 
     t.ok(!errors);
     t.ok(afterHistory.length - beforeHistory.length <= 6);
+    console.log('HISTORY', beforeHistory.length, afterHistory.length, afterHistory)
+    // console.log('PING', afterHistory.length - beforeHistory.length <= 6)
 
     const history = afterHistory.slice(beforeHistory.length);
     const foundPostCall = history.find(
@@ -69,6 +72,9 @@ await test('gql-loader', async (t) => {
       ({ model, operation }) => model === 'MemberType' && operation === 'findMany',
     );
 
+    // console.log('HISTORY', afterHistory)
+    // console.log('foundPostCall', foundPostCall)
+    // console.log('foundMemberTypeCall', foundMemberTypeCall)
     t.ok(foundPostCall);
     t.ok(foundMemberTypeCall);
   });

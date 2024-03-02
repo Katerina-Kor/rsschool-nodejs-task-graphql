@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client"
+import DataLoader from "dataloader";
+import { FieldNode } from "graphql";
 
 export type Context = {
   prisma: PrismaClient,
+  dataLoaders: {
+    [key: string]: any
+  }
 };
 
 export type Args = {
