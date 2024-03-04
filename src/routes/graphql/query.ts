@@ -1,18 +1,106 @@
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from "graphql";
 import { UUIDType } from "./types/uuid.js";
-import { Context, Args, RootObject } from "./types/types.js";
+import { Context, Args, RootObject, User } from "./types/types.js";
 import { UserType } from "./types/user.js";
 import { PostType } from "./types/post.js";
 import { ProfileType } from "./types/profile.js";
 import { MemberType, MemberTypeId } from "./types/memberType.js";
+import { ResolveTree, parseResolveInfo, simplifyParsedResolveInfoFragmentWithType } from 'graphql-parse-resolve-info';
+import DataLoader, { BatchLoadFn } from "dataloader";
+import { getSubscribedToUserLoader, getUserSubscribedToLoader } from "./dataLoader.js";
 
 export const rootQueryType = new GraphQLObjectType<RootObject, Context>({
   name: 'Query',
   fields: {
     users: {
       type: new GraphQLList(UserType),
-      resolve: async (_obj, _args, context) => {
-        return context.prisma.user.findMany();
+      resolve: async (_obj, _args, { prisma, dataLoaders }, info) => {
+        const parsedResolveInfoFragment = parseResolveInfo(info) as ResolveTree;
+        // console.log('FIRST', parsedResolveInfoFragment);
+        const { fields } = simplifyParsedResolveInfoFragmentWithType(
+					parsedResolveInfoFragment,
+          info.returnType
+				);
+        // console.log('FIELDS', fields);
+        const users = await prisma.user.findMany({
+          include: {
+            userSubscribedTo: 'userSubscribedTo' in fields,
+            subscribedToUser: 'subscribedToUser' in fields
+          }
+        });
+
+        users.forEach((user) => {
+          if('subscribedToUser' in fields) {
+            let dl = dataLoaders.get('subscribedToUser');
+        if (!dl) {
+          const batchFunc: BatchLoadFn<string, User[] | undefined> = async (ids) => {
+
+            const users = await prisma.user.findMany({
+              where: {
+                userSubscribedTo: {
+                  some: {
+                    authorId: {
+                      in: ids as string[]
+                    }
+                  }
+                }
+              },
+              include: {
+                userSubscribedTo: true
+              }
+            });
+
+            const sortedUsers = ids.map(id => 
+              users.filter(user => 
+                user.userSubscribedTo.find(subUser => 
+                  subUser.authorId === id)));
+
+            return sortedUsers;
+          }
+
+          dl = new DataLoader<string, User[] | undefined>(batchFunc);
+
+          dataLoaders.set('subscribedToUser', dl);
+        }
+             dl.prime(user.id, user.subscribedToUser.map((subUser) => users.find(user => user.id === subUser.subscriberId) as User))
+          }
+          if('userSubscribedTo' in fields) {
+            let dl = dataLoaders.get('userSubscribedTo');
+        if (!dl) {
+          const batchFunc: BatchLoadFn<string, User[] | undefined> = async (ids) => {
+            const users = await prisma.user.findMany({
+              where: {
+                subscribedToUser: {
+                  some: {
+                    subscriberId: {
+                      in: ids as string[]
+                    },
+                  },
+                },
+              },
+              include: {
+                subscribedToUser: true
+              },
+            });
+
+            const sortedUsers = ids.map(id => 
+              users.filter(user => 
+                user.subscribedToUser.find(subscribedUser => 
+                  subscribedUser.subscriberId === id) ));
+
+            return sortedUsers;
+          }
+
+          dl = new DataLoader<string, User[] | undefined>(batchFunc);
+          dataLoaders.set('userSubscribedTo', dl);
+        }
+            dl && dl.prime(user.id, user.userSubscribedTo.map((subUser) => users.find(user => user.id === subUser.authorId) as User))
+          }
+        })
+        // const dl = dataLoaders.get('subscribedToUser');
+        
+
+        return users;
       },
     },
 

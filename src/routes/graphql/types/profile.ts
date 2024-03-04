@@ -1,8 +1,9 @@
 import { GraphQLBoolean, GraphQLInputObjectType, GraphQLInt, GraphQLObjectType } from "graphql";
 import { UUIDType } from "./uuid.js";
 import { MemberType, MemberTypeId } from "./memberType.js";
-import { Context, Profile } from "./types.js";
-import DataLoader from "dataloader";
+import { Context, Member, Profile } from "./types.js";
+import DataLoader, { BatchLoadFn } from "dataloader";
+import { getMemberLoader } from "../dataLoader.js";
 
 export const ProfileType = new GraphQLObjectType<Profile, Context>({
   name: 'Profile',
@@ -19,7 +20,7 @@ export const ProfileType = new GraphQLObjectType<Profile, Context>({
 
         let dl = dataLoaders.get('memberType');
         if (!dl) {
-          dl = new DataLoader(async (ids) => {
+          const batchFunc: BatchLoadFn<string, Member | undefined> = async (ids) => {
 
             const memberTypes = await prisma.memberType.findMany({
               where: {
@@ -27,16 +28,19 @@ export const ProfileType = new GraphQLObjectType<Profile, Context>({
                   in: ids as string[]
                 }
               }
-            });
+            }) as Member[];
 
             const sortedMemberTypes = ids.map(id => memberTypes.find(memberType => memberType.id === id));
             return sortedMemberTypes;
-          });
+          }
+
+          dl = new DataLoader<string, Member | undefined>(batchFunc);
 
           dataLoaders.set('memberType', dl);
         }
 
         return await dl.load(memberTypeId);
+        // return loaders.member().load(memberTypeId);
       },
     },
   }),

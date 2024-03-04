@@ -25,6 +25,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       const context: Context = {
         prisma,
         dataLoaders: new Map<DLKeys, any>()
+        // loaders: {
+        //   profile: getProfileLoader(prisma),
+        //   posts: getPostsLoader(prisma),
+        //   member: getMemberLoader(prisma),
+        //   subscribedToUser: getSubscribedToUserLoader(prisma),
+        //   userSubscribedTo: getUserSubscribedToLoader(prisma)
+        // }
       };
 
       const graphQLErrors = validate(schema, parse(query), [depthLimit(5)]);

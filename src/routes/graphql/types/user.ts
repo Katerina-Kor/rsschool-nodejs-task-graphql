@@ -2,8 +2,9 @@ import { GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLObjectType, G
 import { UUIDType } from "./uuid.js";
 import { ProfileType } from "./profile.js";
 import { PostType } from "./post.js";
-import { Context, User } from "./types.js";
-import DataLoader from "dataloader";
+import { Context, Post, Profile, User } from "./types.js";
+import DataLoader, { BatchLoadFn } from "dataloader";
+import { getPostsLoader, getProfileLoader, getSubscribedToUserLoader, getUserSubscribedToLoader } from "../dataLoader.js";
 
 export const UserType = new GraphQLObjectType<User, Context>({
   name: 'User',
@@ -18,9 +19,9 @@ export const UserType = new GraphQLObjectType<User, Context>({
 
         let dl = dataLoaders.get('profile');
         if (!dl) {
-          dl = new DataLoader(async (ids) => {
+          const batchFunc: BatchLoadFn<string, Profile | undefined> = async (ids) => {
 
-            const profiles = await prisma.profile.findMany({
+            const profiles: Profile[] = await prisma.profile.findMany({
               where: {
                 userId: {
                   in: ids as string[]
@@ -28,12 +29,14 @@ export const UserType = new GraphQLObjectType<User, Context>({
               }
             });
 
-            const sortedProfiles = ids.map(id => profiles.find((profile) => profile.userId === id));
-            return sortedProfiles;
-          });
+            return ids.map(id => profiles.find((profile) => profile.userId === id));
+          };
+
+          dl = new DataLoader<string, Profile | undefined>(batchFunc);
           dataLoaders.set('profile', dl);
         }
-        return await dl.load(id);
+        return dl.load(id);
+        // return loaders.profile().load(id);
       },
     },
 
@@ -42,7 +45,7 @@ export const UserType = new GraphQLObjectType<User, Context>({
       resolve: async ({ id }, _args, { dataLoaders, prisma }) => {
         let dl = dataLoaders.get('posts');
         if (!dl) {
-          dl = new DataLoader(async (ids) => {
+          const batchFunc: BatchLoadFn<string, Post[] | undefined> = async (ids) => {
 
             const posts = await prisma.post.findMany({
               where: {
@@ -54,12 +57,15 @@ export const UserType = new GraphQLObjectType<User, Context>({
 
             const sortedPosts = ids.map(id => posts.filter((post) => post.authorId === id));
             return sortedPosts;
-          });
+          }
+
+          dl = new DataLoader<string, Post[] | undefined>(batchFunc);
 
           dataLoaders.set('posts', dl);
         }
 
         return await dl.load(id);
+        // return loaders.posts().load(id);
       },
     },
 
@@ -69,7 +75,7 @@ export const UserType = new GraphQLObjectType<User, Context>({
 
         let dl = dataLoaders.get('userSubscribedTo');
         if (!dl) {
-          dl = new DataLoader(async (ids) => {
+          const batchFunc: BatchLoadFn<string, User[] | undefined> = async (ids) => {
             const users = await prisma.user.findMany({
               where: {
                 subscribedToUser: {
@@ -91,11 +97,14 @@ export const UserType = new GraphQLObjectType<User, Context>({
                   subscribedUser.subscriberId === id) ));
 
             return sortedUsers;
-          });
+          }
+
+          dl = new DataLoader<string, User[] | undefined>(batchFunc);
           dataLoaders.set('userSubscribedTo', dl);
         }
 
         return await dl.load(id);
+        // return loaders.userSubscribedTo().load(id);
       },
     },
 
@@ -105,7 +114,7 @@ export const UserType = new GraphQLObjectType<User, Context>({
 
         let dl = dataLoaders.get('subscribedToUser');
         if (!dl) {
-          dl = new DataLoader(async (ids) => {
+          const batchFunc: BatchLoadFn<string, User[] | undefined> = async (ids) => {
 
             const users = await prisma.user.findMany({
               where: {
@@ -128,12 +137,15 @@ export const UserType = new GraphQLObjectType<User, Context>({
                   subUser.authorId === id)));
 
             return sortedUsers;
-          });
+          }
+
+          dl = new DataLoader<string, User[] | undefined>(batchFunc);
 
           dataLoaders.set('subscribedToUser', dl);
         }
 
         return await dl.load(id);
+        // return loaders.subscribedToUser().load(id);
       },
     },
 
