@@ -4,7 +4,6 @@ import { ProfileType } from "./profile.js";
 import { PostType } from "./post.js";
 import { Context, Post, Profile, User } from "./types.js";
 import DataLoader, { BatchLoadFn } from "dataloader";
-import { getPostsLoader, getProfileLoader, getSubscribedToUserLoader, getUserSubscribedToLoader } from "../dataLoader.js";
 
 export const UserType = new GraphQLObjectType<User, Context>({
   name: 'User',
@@ -36,7 +35,6 @@ export const UserType = new GraphQLObjectType<User, Context>({
           dataLoaders.set('profile', dl);
         }
         return dl.load(id);
-        // return loaders.profile().load(id);
       },
     },
 
@@ -65,7 +63,6 @@ export const UserType = new GraphQLObjectType<User, Context>({
         }
 
         return await dl.load(id);
-        // return loaders.posts().load(id);
       },
     },
 
@@ -104,7 +101,6 @@ export const UserType = new GraphQLObjectType<User, Context>({
         }
 
         return await dl.load(id);
-        // return loaders.userSubscribedTo().load(id);
       },
     },
 
@@ -145,7 +141,6 @@ export const UserType = new GraphQLObjectType<User, Context>({
         }
 
         return await dl.load(id);
-        // return loaders.subscribedToUser().load(id);
       },
     },
 

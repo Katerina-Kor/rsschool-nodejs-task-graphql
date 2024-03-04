@@ -3,7 +3,6 @@ import { UUIDType } from "./uuid.js";
 import { MemberType, MemberTypeId } from "./memberType.js";
 import { Context, Member, Profile } from "./types.js";
 import DataLoader, { BatchLoadFn } from "dataloader";
-import { getMemberLoader } from "../dataLoader.js";
 
 export const ProfileType = new GraphQLObjectType<Profile, Context>({
   name: 'Profile',
@@ -40,7 +39,6 @@ export const ProfileType = new GraphQLObjectType<Profile, Context>({
         }
 
         return await dl.load(memberTypeId);
-        // return loaders.member().load(memberTypeId);
       },
     },
   }),
